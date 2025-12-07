@@ -222,11 +222,19 @@ echo "Restore complete!"
 
 ### Restore Usage
 
-**Important:** The restore script requires the `.env` file to exist. If you've lost your `.env` file, first extract it from the docker-config backup:
+**Critical:** The `.env` file **must** be restored before starting any containers. If containers start without proper environment variables, the database will be created with empty credentials and will need to be deleted and recreated.
+
+If you've lost your `.env` file, restore it from the docker-config backup **before** running docker compose:
 
 ```bash
-# Extract docker config (includes .env and docker-compose.yml)
+# 1. Stop any running containers
+docker compose down
+
+# 2. Extract docker config (includes .env and docker-compose.yml)
 tar xzf backup/docker-config-YYYY-MM-DD.tar.gz
+
+# 3. Now run the restore script
+./restore.sh YYYY-MM-DD
 ```
 
 Then run the restore:
@@ -244,6 +252,19 @@ Then run the restore:
 # Restore only NPM
 ./restore.sh 2025-12-07 --npm-only
 ```
+
+### Fixing Permissions After Restore
+
+After restoring from backup, file ownership may not match what the Docker containers expect. Run the fix-permissions script to correct this:
+
+```bash
+sudo ./fix-permissions.sh
+```
+
+This sets the correct ownership:
+- `wordpress/` → UID 33:33 (www-data)
+- `wordpress-db/` → UID 999:0 (mysql)
+- `npm/` → UID 0:0 (root)
 
 ---
 

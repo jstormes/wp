@@ -72,6 +72,7 @@ Backup and restore scripts are provided:
 
 - `backup.sh` - Creates a backup of WordPress files and database
 - `restore.sh` - Restores from a backup
+- `fix-permissions.sh` - Fixes file ownership after restore (run with sudo)
 
 See `docker-backup-guide.md` for detailed backup/restore instructions.
 
