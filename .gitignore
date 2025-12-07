@@ -1,5 +1,5 @@
 .env
 npm/
-wordpress/.htaccess
 wordpress/
 wordpress-db/
+backup/
