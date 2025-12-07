@@ -516,3 +516,150 @@ Ensure MySQL is fully ready before restoring:
 ```bash
 docker compose logs wordpress-db
 ```
+
+---
+
+## Fail2ban Configuration
+
+Fail2ban can protect your WordPress installation from brute-force login attacks by monitoring logs and banning IPs that show malicious behavior.
+
+### Installing Fail2ban on Host
+
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install fail2ban
+
+# Start and enable
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+```
+
+### WordPress Jail Configuration
+
+Create `/etc/fail2ban/jail.d/wordpress.conf`:
+
+```ini
+[wordpress]
+enabled = true
+port = http,https
+filter = wordpress
+logpath = /path/to/your/wp/logs/npm/proxy-host-*_access.log
+maxretry = 5
+findtime = 600
+bantime = 3600
+```
+
+### WordPress Filter
+
+Create `/etc/fail2ban/filter.d/wordpress.conf`:
+
+```ini
+[Definition]
+failregex = ^<HOST> .* "POST /wp-login.php
+            ^<HOST> .* "POST /xmlrpc.php
+ignoreregex =
+```
+
+### Testing and Managing Fail2ban
+
+```bash
+# Test filter against logs
+sudo fail2ban-regex /path/to/logs/npm/proxy-host-*_access.log /etc/fail2ban/filter.d/wordpress.conf
+
+# Check jail status
+sudo fail2ban-client status wordpress
+
+# Unban an IP
+sudo fail2ban-client set wordpress unbanip 192.168.1.100
+
+# View banned IPs
+sudo fail2ban-client status wordpress
+```
+
+### Important Notes
+
+- Adjust `logpath` to match your actual log location
+- The logs are in the `./logs/npm/` directory
+- Fail2ban runs on the host, not in a container
+- Ensure NPM is configured to log the real client IP (see "Real IP Forwarding" section)
+
+---
+
+## WordPress Security Plugins
+
+### Recommended Security Plugins
+
+| Plugin | Purpose | Notes |
+|--------|---------|-------|
+| **Wordfence Security** | Firewall, malware scanner, login security | Most comprehensive free option |
+| **Limit Login Attempts Reloaded** | Brute-force protection | Lightweight, works with fail2ban |
+| **WP Hide & Security Enhancer** | Hide WordPress fingerprints | Obscures wp-admin, wp-login paths |
+| **UpdraftPlus** | Backup to cloud storage | Complements local backup scripts |
+| **Two Factor** | 2FA for wp-admin | Adds TOTP authentication |
+
+### Wordfence Configuration
+
+After installing Wordfence:
+
+1. **Enable Firewall**: Go to Wordfence → Firewall → Manage Firewall
+   - Set to "Enabled and Protecting"
+   - Enable "Rate Limiting"
+
+2. **Configure Login Security**:
+   - Wordfence → Login Security
+   - Enable Two-Factor Authentication
+   - Set "Lock out after how many login failures" to 5
+   - Set "Lock out for how long" to 1 hour
+
+3. **Enable Brute Force Protection**:
+   - Wordfence → All Options → Brute Force Protection
+   - Enable "Enforce strong passwords"
+   - Enable "Prevent discovery of usernames"
+
+4. **Configure Scanning**:
+   - Wordfence → Scan
+   - Run initial scan
+   - Set up scheduled scans (weekly recommended)
+
+### Disable XML-RPC (If Not Needed)
+
+XML-RPC is a common attack vector. If you don't use it (mobile apps, Jetpack, etc.), disable it:
+
+**Option 1: Via .htaccess**
+
+Add to `wordpress/.htaccess`:
+
+```apache
+<Files xmlrpc.php>
+    Order Deny,Allow
+    Deny from all
+</Files>
+```
+
+**Option 2: Via Plugin**
+
+Install "Disable XML-RPC" plugin.
+
+**Option 3: Via wp-config.php**
+
+Add to `wordpress/wp-config.php`:
+
+```php
+add_filter('xmlrpc_enabled', '__return_false');
+```
+
+### Security Checklist
+
+- [ ] Change default `admin` username
+- [ ] Use strong passwords (12+ characters, mixed case, numbers, symbols)
+- [ ] Enable Two-Factor Authentication
+- [ ] Keep WordPress, themes, and plugins updated
+- [ ] Remove unused themes and plugins
+- [ ] Disable file editing in wp-admin (add to wp-config.php):
+  ```php
+  define('DISALLOW_FILE_EDIT', true);
+  ```
+- [ ] Set correct file permissions (755 for directories, 644 for files)
+- [ ] Configure automatic updates for minor releases
+- [ ] Monitor security scan results regularly
+- [ ] Review user accounts and remove inactive users

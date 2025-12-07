@@ -39,12 +39,18 @@ services:
       WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
     volumes:
       - ./wordpress:/var/www/html
+      - ./logs/wordpress:/var/log/apache2
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
-      interval: 30s
+      interval: 5m
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
 
   wordpress-db:
     image: mysql:8.0
@@ -57,9 +63,15 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
       - ./wordpress-db:/var/lib/mysql
+      - ./logs/mysql:/var/log/mysql
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 30s
+      interval: 5m
       timeout: 10s
       retries: 3
       start_period: 60s
@@ -78,10 +90,16 @@ services:
     volumes:
       - ./npm/data:/data
       - ./npm/letsencrypt:/etc/letsencrypt
+      - ./logs/npm:/data/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/"]
-      interval: 30s
+      interval: 5m
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
 

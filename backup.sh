@@ -41,6 +41,12 @@ echo "Starting NPM..."
 docker compose start npm
 NPM_STOPPED=false
 
+# Logs (for troubleshooting)
+echo "Backing up logs..."
+if [ -d "./logs" ]; then
+    tar czf "$BACKUP_DIR/logs-$DATE.tar.gz" ./logs
+fi
+
 # Cleanup old backups
 find "$BACKUP_DIR" -type f -mtime +30 -delete
 

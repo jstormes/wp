@@ -61,9 +61,13 @@ All configuration is done through environment variables in the `.env` file. See 
 ├── docker-compose.yml       # Docker Compose configuration
 ├── wordpress/               # WordPress files (mounted volume)
 ├── wordpress-db/            # MySQL data (mounted volume)
-└── npm/                     # Nginx Proxy Manager data
-    ├── data/
-    └── letsencrypt/
+├── npm/                     # Nginx Proxy Manager data
+│   ├── data/
+│   └── letsencrypt/
+└── logs/                    # Container logs (for troubleshooting)
+    ├── wordpress/           # Apache access/error logs
+    ├── mysql/               # MySQL logs
+    └── npm/                 # Nginx Proxy Manager logs
 ```
 
 ## Backup and Restore

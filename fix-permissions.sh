@@ -40,4 +40,10 @@ if [ -d "./npm" ]; then
     chown -R 0:0 ./npm
 fi
 
+# Logs: owned by root (containers write as root)
+if [ -d "./logs" ]; then
+    echo "Setting logs/ ownership to UID 0:0 (root)..."
+    chown -R 0:0 ./logs
+fi
+
 echo "Permissions fixed successfully!"
