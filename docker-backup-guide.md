@@ -222,6 +222,15 @@ echo "Restore complete!"
 
 ### Restore Usage
 
+**Important:** The restore script requires the `.env` file to exist. If you've lost your `.env` file, first extract it from the docker-config backup:
+
+```bash
+# Extract docker config (includes .env and docker-compose.yml)
+tar xzf backup/docker-config-YYYY-MM-DD.tar.gz
+```
+
+Then run the restore:
+
 ```bash
 # List available backups
 ./restore.sh
