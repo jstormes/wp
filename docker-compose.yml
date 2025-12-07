@@ -1,0 +1,65 @@
+
+############################################################################
+# This section `services` is where the "servers" are.  Each service provides
+# a "server".  Common development use cases are web servers, database
+# servers and testing servers.
+#
+# The purpose of each service is to define how the service (aka server)
+# interacts with the host.  So 8080:80 means localhost:8080 is mapped
+# to 80 inside the service.
+#
+# Services that have "build" are modified locally from a Dockerfile. Think
+# of them as "customizing" what is installed on the "server".
+#
+# Services that have "image" are used in a default service configuration.
+#
+# The "port" maps a TCP/IP port from the service to the host (real computer).
+#
+# The "volumes" map a directory from the host to inside the service.
+#
+# All the services in the file share a private common network and can talk
+# to each other over that private network using the service name as the
+# host name.
+############################################################################
+services:
+
+  wordpress:
+    build:
+      context: .
+      dockerfile: .docker/WordPress.Dockerfile
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+    volumes:
+      - ./wordpress:/var/www/html
+
+  wordpress-db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME}
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWOR
+#      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./wordpress-db:/var/lib/mysql
+
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+

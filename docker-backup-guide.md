@@ -1,0 +1,475 @@
+# Docker WordPress Backup & Restore Guide
+
+## Overview
+
+This guide covers backing up and restoring a Dockerized WordPress installation with Nginx Proxy Manager.
+
+## Components Backed Up
+
+- WordPress MySQL database
+- WordPress files (themes, plugins, uploads)
+- Nginx Proxy Manager configuration and SSL certificates
+- Docker Compose configuration files
+
+---
+
+## Setup
+
+### .env File
+
+Store credentials securely in a `.env` file:
+
+```bash
+WORDPRESS_DB_USER=wordpressuser
+WORDPRESS_DB_PASSWORD=your_secure_password
+WORDPRESS_DB_NAME=wordpress
+MYSQL_ROOT_PASSWORD=your_secure_root_password
+TZ=America/Chicago
+```
+
+Secure it:
+
+```bash
+chmod 600 .env
+```
+
+### docker-compose.yml
+
+```yaml
+services:
+  wordpress:
+    build:
+      context: .
+      dockerfile: .docker/WordPress.Dockerfile
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+    volumes:
+      - ./wordpress:/var/www/html
+
+  wordpress-db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${WORDPRESS_DB_NAME}
+      MYSQL_USER: ${WORDPRESS_DB_USER}
+      MYSQL_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./wordpress-db:/var/lib/mysql
+
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+```
+
+---
+
+## Backup Script
+
+**backup.sh:**
+
+```bash
+#!/bin/bash
+set -e
+source .env
+
+BACKUP_DIR="./backup"
+DATE=$(date +%F)
+NPM_STOPPED=false
+UPDATE_IMAGES=${1:-false}  # Pass 'update' as argument to update images
+
+# Ensure NPM is restarted on exit, error, or interrupt
+cleanup() {
+    if [ "$NPM_STOPPED" = true ]; then
+        echo "Restarting NPM..."
+        docker compose start npm
+    fi
+}
+trap cleanup EXIT
+
+mkdir -p "$BACKUP_DIR"
+
+# Docker config files
+echo "Backing up Docker config..."
+tar czf "$BACKUP_DIR/docker-config-$DATE.tar.gz" docker-compose.yml .env
+
+# WordPress Database
+echo "Backing up WordPress database..."
+docker compose exec -T wordpress-db mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" "$WORDPRESS_DB_NAME" | gzip > "$BACKUP_DIR/db-$DATE.sql.gz"
+
+# WordPress Files
+echo "Backing up WordPress files..."
+tar czf "$BACKUP_DIR/wp-files-$DATE.tar.gz" ./wordpress
+
+# Nginx Proxy Manager (stop for clean SQLite backup)
+echo "Stopping NPM for backup..."
+docker compose stop npm
+NPM_STOPPED=true
+
+echo "Backing up NPM..."
+tar czf "$BACKUP_DIR/npm-$DATE.tar.gz" ./npm
+
+echo "Starting NPM..."
+docker compose start npm
+NPM_STOPPED=false
+
+# Cleanup old backups
+find "$BACKUP_DIR" -type f -mtime +30 -delete
+
+echo "Backup complete: $DATE"
+
+# Update Docker images if requested
+if [ "$UPDATE_IMAGES" = "update" ]; then
+    echo "Pulling latest Docker images..."
+    docker compose pull
+
+    echo "Recreating containers with new images..."
+    docker compose up -d
+
+    echo "Cleaning up old images..."
+    docker image prune -f
+
+    echo "Update complete!"
+fi
+```
+
+### Backup Usage
+
+```bash
+# Backup only
+./backup.sh
+
+# Backup and update Docker images
+./backup.sh update
+```
+
+---
+
+## Restore Script
+
+**restore.sh:**
+
+```bash
+#!/bin/bash
+set -e
+source .env
+
+BACKUP_DIR="./backup"
+
+if [ -z "$1" ]; then
+    echo "Available backups:"
+    ls -1 "$BACKUP_DIR"/db-*.sql.gz 2>/dev/null | sed 's/.*db-\(.*\)\.sql\.gz/\1/'
+    echo ""
+    echo "Usage: $0 <date> [--wp-only|--npm-only|--all]"
+    exit 1
+fi
+
+DATE=$1
+RESTORE_TARGET=${2:---all}
+
+DB_BACKUP="$BACKUP_DIR/db-$DATE.sql.gz"
+WP_BACKUP="$BACKUP_DIR/wp-files-$DATE.tar.gz"
+NPM_BACKUP="$BACKUP_DIR/npm-$DATE.tar.gz"
+
+echo "Restoring from: $DATE"
+read -p "Continue? (yes/no): " CONFIRM
+[ "$CONFIRM" != "yes" ] && echo "Cancelled." && exit 0
+
+if [ "$RESTORE_TARGET" = "--all" ] || [ "$RESTORE_TARGET" = "--wp-only" ]; then
+    echo "Restoring WordPress files..."
+    tar xzf "$WP_BACKUP" -C .
+
+    echo "Recreating database..."
+    docker compose down wordpress-db
+    docker volume rm $(docker compose config --volumes | grep db_data) 2>/dev/null || true
+    docker compose up -d wordpress-db
+
+    echo "Waiting for MySQL..."
+    until docker compose exec -T wordpress-db mysql -u root -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" &>/dev/null; do
+        sleep 2
+    done
+
+    echo "Restoring database..."
+    gunzip -c "$DB_BACKUP" | docker compose exec -T wordpress-db mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$WORDPRESS_DB_NAME"
+fi
+
+if [ "$RESTORE_TARGET" = "--all" ] || [ "$RESTORE_TARGET" = "--npm-only" ]; then
+    echo "Restoring Nginx Proxy Manager..."
+    docker compose stop npm
+    tar xzf "$NPM_BACKUP" -C .
+    docker compose up -d npm
+fi
+
+docker compose up -d
+
+echo "Restore complete!"
+```
+
+### Restore Usage
+
+```bash
+# List available backups
+./restore.sh
+
+# Restore everything
+./restore.sh 2025-12-07
+
+# Restore only WordPress
+./restore.sh 2025-12-07 --wp-only
+
+# Restore only NPM
+./restore.sh 2025-12-07 --npm-only
+```
+
+---
+
+## User & Permission Setup
+
+### Add Backup User to Docker Group
+
+```bash
+sudo usermod -aG docker backup
+```
+
+### File Permissions
+
+```bash
+# Set ownership
+chown backup:backup backup.sh restore.sh .env
+
+# Scripts: readable and executable by owner only
+chmod 700 backup.sh restore.sh
+
+# .env: readable by owner only (contains secrets)
+chmod 600 .env
+
+# Backup directory: owned by backup user
+mkdir -p ./backup
+chown backup:backup ./backup
+chmod 700 ./backup
+```
+
+### WordPress and NPM Directory Permissions
+
+```bash
+chown -R docker:docker ./wordpress ./npm
+chmod -R g+r ./wordpress ./npm
+usermod -aG docker backup
+```
+
+### Permissions Summary
+
+| File/Directory | Owner         | Permissions | Notes                      |
+|----------------|---------------|-------------|----------------------------|
+| `backup.sh`    | backup:backup | 700         | Execute only by owner      |
+| `restore.sh`   | backup:backup | 700         | Execute only by owner      |
+| `.env`         | backup:backup | 600         | Read only by owner         |
+| `./backup/`    | backup:backup | 700         | Backup files directory     |
+| `./wordpress/` | docker:docker | 755         | WordPress needs docker access |
+| `./npm/`       | docker:docker | 755         | NPM needs docker access    |
+
+---
+
+## Cron Setup
+
+### Create Log File
+
+```bash
+sudo touch /var/log/backup.log
+sudo chown backup:backup /var/log/backup.log
+chmod 640 /var/log/backup.log
+```
+
+### Edit Crontab
+
+```bash
+sudo crontab -u backup -e
+```
+
+### Crontab Entries
+
+```cron
+# Daily backup at 2:30 AM
+30 2 * * * cd /path/to/your/docker/project && ./backup.sh >> /var/log/backup.log 2>&1
+
+# Weekly backup with image update on Sunday at 3 AM
+0 3 * * 0 cd /path/to/your/docker/project && ./backup.sh update >> /var/log/backup-weekly.log 2>&1
+```
+
+---
+
+## Testing
+
+### Test Backup as Backup User
+
+```bash
+sudo -u backup ./backup.sh
+```
+
+### Verify Backup Files
+
+```bash
+ls -la ./backup/
+```
+
+---
+
+## Offsite Backup Recommendations
+
+Consider syncing backups offsite using:
+
+- `rclone` to S3, Backblaze B2, Google Drive, etc.
+- `rsync` to another server
+- `restic` for encrypted, deduplicated backups
+
+Example rclone sync:
+
+```bash
+rclone sync ./backup remote:backups/wordpress
+```
+
+---
+
+## Restricting wp-admin to Local Network
+
+Protect your WordPress admin area by allowing access only from your local network.
+
+### Option 1: NPM Access Lists (Recommended)
+
+This is the easiest method and is managed through the NPM UI.
+
+1. Go to **Access Lists** → **Add Access List**
+2. Name it "Local Network Only"
+3. Under the **Access** tab, add:
+   - `allow 192.168.0.0/16` (or your specific local subnet)
+   - `allow 10.0.0.0/8`
+   - `deny all`
+4. Save
+
+Then edit your WordPress proxy host:
+
+1. Go to **Hosts** → **Proxy Hosts** → Edit your WordPress host
+2. Go to the **Custom locations** tab
+3. Add a new location:
+   - Location: `/wp-admin`
+   - Forward Hostname/IP: same as main
+   - Forward Port: same as main
+   - Select your "Local Network Only" access list
+4. Add another location for `/wp-login.php`
+
+### Option 2: NPM Custom Nginx Config
+
+Edit your WordPress proxy host in NPM and go to the **Advanced** tab. Add:
+
+```nginx
+# Restrict wp-admin and wp-login to local network
+location /wp-admin {
+    allow 192.168.0.0/16;
+    allow 10.0.0.0/8;
+    allow 172.16.0.0/12;
+    deny all;
+    
+    proxy_pass http://wordpress:80;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+location = /wp-login.php {
+    allow 192.168.0.0/16;
+    allow 10.0.0.0/8;
+    allow 172.16.0.0/12;
+    deny all;
+    
+    proxy_pass http://wordpress:80;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Adjust the `proxy_pass` to match your WordPress container name.
+
+### Option 3: WordPress .htaccess
+
+Add to your `wordpress/.htaccess`:
+
+```apache
+<Files wp-login.php>
+    Order Deny,Allow
+    Deny from all
+    Allow from 192.168.0.0/16
+    Allow from 10.0.0.0/8
+</Files>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REMOTE_ADDR} !^192\.168\.
+    RewriteCond %{REMOTE_ADDR} !^10\.
+    RewriteRule ^wp-admin - [F,L]
+</IfModule>
+```
+
+### Important: Real IP Forwarding
+
+For any of these methods to work correctly, NPM needs to pass the real client IP to WordPress.
+
+Ensure your WordPress proxy host has these headers set (usually default in NPM):
+
+```nginx
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+```
+
+Add this to WordPress `wp-config.php` so WordPress sees the real client IP:
+
+```php
+if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $_SERVER['REMOTE_ADDR'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
+}
+```
+
+---
+
+## Troubleshooting
+
+### Permission Denied on Docker Commands
+
+Ensure the backup user is in the docker group and has logged out/in:
+
+```bash
+groups backup  # Should show 'docker'
+```
+
+### NPM Not Restarting After Failed Backup
+
+The cleanup trap should handle this, but you can manually restart:
+
+```bash
+docker compose start npm
+```
+
+### Database Restore Fails
+
+Ensure MySQL is fully ready before restoring:
+
+```bash
+docker compose logs wordpress-db
+```
