@@ -29,6 +29,8 @@ services:
       dockerfile: .docker/WordPress.Dockerfile
     restart: always
     ports:
+      # SECURITY: Remove or change to "127.0.0.1:8080:80" after initial setup
+      # This port bypasses the NPM proxy and should not be exposed in production
       - 8080:80
     environment:
       WORDPRESS_DB_HOST: wordpress-db
@@ -37,6 +39,12 @@ services:
       WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
     volumes:
       - ./wordpress:/var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   wordpress-db:
     image: mysql:8.0
@@ -49,6 +57,12 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
       - ./wordpress-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   npm:
     image: 'jc21/nginx-proxy-manager:latest'
@@ -57,9 +71,17 @@ services:
       TZ: ${TZ}
     ports:
       - '80:80'
+      # SECURITY: Remove or change to "127.0.0.1:81:81" after initial setup
+      # This is the NPM admin interface and should not be exposed in production
       - '81:81'
       - '443:443'
     volumes:
       - ./npm/data:/data
       - ./npm/letsencrypt:/etc/letsencrypt
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:81/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 

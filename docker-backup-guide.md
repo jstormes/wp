@@ -4,6 +4,19 @@
 
 This guide covers backing up and restoring a Dockerized WordPress installation with Nginx Proxy Manager.
 
+## Security Notice
+
+This setup exposes ports for initial configuration that **must be secured before production deployment**. See the "Security Hardening" section in README.md for details.
+
+**Ports exposed during setup:**
+- Port 8080: WordPress direct access (bypasses proxy)
+- Port 81: NPM admin interface
+
+**After configuration, you should:**
+1. Remove or bind port 8080 to localhost
+2. Bind port 81 to localhost (use SSH tunnel for access)
+3. Change all default passwords
+
 ## Components Backed Up
 
 - WordPress MySQL database

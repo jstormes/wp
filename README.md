@@ -87,11 +87,58 @@ To also remove the volumes (warning: deletes all data):
 docker-compose down -v
 ```
 
-## Production Considerations
+## Production Deployment & Security Hardening
 
-Before deploying to production:
+### Initial Setup
 
-1. Change all default passwords in `.env`
-2. Configure Nginx Proxy Manager with your domain and SSL certificates
-3. Set up regular backups using the provided scripts
-4. Consider adding resource limits to the containers
+During initial setup, ports 8080 (WordPress direct) and 81 (NPM admin) are exposed for configuration. This allows you to:
+
+1. Access WordPress directly at http://localhost:8080 to complete installation
+2. Access NPM admin at http://localhost:81 to configure your proxy and SSL
+
+### Security Hardening (Required for Production)
+
+**After completing initial configuration**, you must secure these ports:
+
+1. **Change all default passwords** in `.env`:
+   - `WORDPRESS_DB_PASSWORD` - Use a strong, unique password
+   - `MYSQL_ROOT_PASSWORD` - Use a strong, unique password
+   - Change the NPM admin password from `changeme`
+
+2. **Secure exposed ports** in `docker-compose.yml`:
+
+   Remove or comment out the WordPress direct access port:
+   ```yaml
+   # ports:
+   #   - 8080:80
+   ```
+
+   Bind NPM admin to localhost only (accessible via SSH tunnel):
+   ```yaml
+   ports:
+     - '80:80'
+     - '127.0.0.1:81:81'  # Admin only accessible locally
+     - '443:443'
+   ```
+
+3. **Restart containers** to apply changes:
+   ```bash
+   docker compose down && docker compose up -d
+   ```
+
+### Accessing NPM Admin After Hardening
+
+Once port 81 is bound to localhost, use an SSH tunnel to access the admin interface:
+
+```bash
+ssh -L 8181:localhost:81 user@your-server
+```
+
+Then access NPM admin at http://localhost:8181
+
+### Additional Recommendations
+
+- Configure Nginx Proxy Manager with your domain and SSL certificates
+- Set up regular backups using the provided scripts
+- Restrict `wp-admin` access to local network (see `docker-backup-guide.md`)
+- Keep Docker images updated regularly
