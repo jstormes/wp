@@ -82,11 +82,11 @@ services:
     environment:
       TZ: ${TZ}
     ports:
-      - '80:80'
+      - '9080:80'
       # SECURITY: Remove or change to "127.0.0.1:81:81" after initial setup
       # This is the NPM admin interface and should not be exposed in production
-      - '81:81'
-      - '443:443'
+      - '9081:81'
+      - '9443:443'
     volumes:
       - ./npm/data:/data
       - ./npm/letsencrypt:/etc/letsencrypt
