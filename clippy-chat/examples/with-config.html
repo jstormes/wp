@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clippy Chat - Config File Example</title>
+
+    <!-- REQUIRED: ClippyJS CSS -->
+    <link rel="stylesheet" href="../vendor/clippyjs/assets/clippy.css">
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #11998e;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .instruction {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .benefit {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📎 Clippy Chat - Config File Example</h1>
+
+        <div class="card">
+            <h2>Using a Configuration File</h2>
+            <p>This example demonstrates using a separate config file for easier management.</p>
+
+            <div class="instruction">
+                <strong>📌 Look for Clippy in the bottom-right corner!</strong><br>
+                This page loads settings from <code>clippy-config.js</code>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Benefits of Config Files</h2>
+            <div class="benefit">
+                <strong>✅ Centralized Settings</strong><br>
+                Keep all configuration in one file that can be shared across multiple pages.
+            </div>
+            <div class="benefit">
+                <strong>✅ Easy Updates</strong><br>
+                Change API URL or settings in one place instead of editing every page.
+            </div>
+            <div class="benefit">
+                <strong>✅ Version Control</strong><br>
+                Track configuration changes separately from page content.
+            </div>
+            <div class="benefit">
+                <strong>✅ Environment-Specific</strong><br>
+                Use different configs for development, staging, and production.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Implementation</h2>
+            <p>Load the config file before initializing:</p>
+            <pre><code>&lt;!-- Load configuration --&gt;
+&lt;script src="clippy-config.js"&gt;&lt;/script&gt;
+
+&lt;!-- Load widget --&gt;
+&lt;script src="dist/clippy-chat.min.js"&gt;&lt;/script&gt;
+
+&lt;!-- Initialize with config --&gt;
+&lt;script&gt;
+    ClippyChat.init(CLIPPY_CONFIG);
+&lt;/script&gt;</code></pre>
+        </div>
+    </div>
+
+    <!-- REQUIRED: jQuery -->
+    <script src="../vendor/jquery/dist/jquery.min.js"></script>
+
+    <!-- REQUIRED: ClippyJS -->
+    <script src="../vendor/clippyjs/clippy.js"></script>
+
+    <!-- Load configuration file -->
+    <script src="clippy-config.js"></script>
+
+    <!-- REQUIRED: Clippy Chat Widget -->
+    <script src="../dist/clippy-chat.min.js"></script>
+
+    <!-- Initialize with config file -->
+    <script>
+        ClippyChat.init(CLIPPY_CONFIG);
+    </script>
+</body>
+</html>

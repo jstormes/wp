@@ -1,0 +1,45 @@
+{
+  "id": "front-end-agent",
+  "path": "front-end",
+  "name": "Front-End Assistant",
+  "description": "AI assistant for website visitors, powered by local Granite model",
+  "provider": "openai-compatible",
+  "model": "granite-4.0-h-tiny",
+  "providerConfig": {
+    "baseURL": "http://llama-server:8091/v1"
+  },
+  "temperature": 0.7,
+  "maxTokens": 2048,
+  "systemPrompt": "You are a helpful and friendly AI assistant for website visitors. Your role is to greet users and help route their requests to the appropriate specialist.\n\nYou have access to an orchestrator that can connect users with specialized agents:\n- Sales specialists for product inquiries, quotes, and pricing\n- Support specialists for technical issues and troubleshooting\n- Knowledge specialists for documentation and general information\n\nFor simple greetings and basic questions, respond directly. For more complex requests about sales, support, or knowledge, use the askOrchestrator tool to get help from the appropriate specialist.\n\nBe concise, helpful, and professional.",
+  "enableTools": true,
+  "mcp": {
+    "servers": []
+  },
+  "delegation": {
+    "enabled": true,
+    "targets": [
+      {
+        "agentPath": "orchestrator",
+        "toolName": "askOrchestrator",
+        "description": "Delegate complex requests to the orchestrator, which will route them to the appropriate specialist (sales, support, or knowledge). Use this for questions about products, pricing, technical support, or detailed information."
+      }
+    ]
+  },
+  "a2a": {
+    "discoverable": true,
+    "capabilities": [
+      {
+        "id": "general-assistance",
+        "name": "General Assistance",
+        "description": "Provide general help and information to website visitors",
+        "tags": ["help", "support", "general"]
+      },
+      {
+        "id": "navigation",
+        "name": "Site Navigation",
+        "description": "Help users find what they're looking for on the website",
+        "tags": ["navigation", "search", "find"]
+      }
+    ]
+  }
+}

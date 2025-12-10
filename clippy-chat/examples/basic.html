@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clippy Chat - Basic Example</title>
+
+    <!-- REQUIRED: ClippyJS CSS -->
+    <link rel="stylesheet" href="../vendor/clippyjs/assets/clippy.css">
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .instruction {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📎 Clippy Chat - Basic Example</h1>
+
+        <div class="card">
+            <h2>Welcome!</h2>
+            <p>This is a basic implementation of Clippy Chat with minimal configuration.</p>
+
+            <div class="instruction">
+                <strong>📌 Look for Clippy in the bottom-right corner!</strong><br>
+                Click on Clippy to open the chat and start a conversation.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Implementation</h2>
+            <p>This page uses the default configuration with just three required files:</p>
+            <ol>
+                <li><code>clippy.css</code> - ClippyJS styles</li>
+                <li><code>jquery.min.js</code> + <code>clippy.js</code> - ClippyJS library</li>
+                <li><code>clippy-chat.min.js</code> - The chat widget</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <h2>Configuration</h2>
+            <p>The widget is initialized with:</p>
+            <pre><code>ClippyChat.init({
+    apiUrl: 'http://localhost:8088',
+    clippyPosition: 'bottom-right'
+});</code></pre>
+        </div>
+    </div>
+
+    <!-- REQUIRED: jQuery -->
+    <script src="../vendor/jquery/dist/jquery.min.js"></script>
+
+    <!-- REQUIRED: ClippyJS -->
+    <script src="../vendor/clippyjs/clippy.js"></script>
+
+    <!-- REQUIRED: Clippy Chat Widget -->
+    <script src="../dist/clippy-chat.min.js"></script>
+
+    <!-- Initialize Clippy Chat -->
+    <script>
+        ClippyChat.init({
+            apiUrl: 'http://localhost:8088',
+            clippyPosition: 'bottom-right',
+            autoGreeting: 'Hi! This is the basic example. How can I help you?'
+        });
+    </script>
+</body>
+</html>

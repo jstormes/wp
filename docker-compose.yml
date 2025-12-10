@@ -1,3 +1,24 @@
+############################################################################
+# This section `secrets` is for sharing secret files between the host
+# and Docker containers.  Unlike volumes, secrets can be outside the
+# project's directory structure and have special rules to help prevent them
+# from being included in a Docker image.
+#
+# A common development use case is ssh keys for private git repositories.
+############################################################################
+secrets:
+  claude-auth:
+    file: ~/.claude/.credentials.json
+  claude-cfg:
+    file: ~/.claude.json
+
+#  gemini-auth:
+#    file: ~/.gemini
+#  ssh:
+#    file: ~/.ssh
+#  aws:
+#    file: ~/.aws
+
 
 ############################################################################
 # This section `services` is where the "servers" are.  Each service provides
@@ -195,3 +216,127 @@ services:
     #   -m /models/model.gguf -c 2048 -b 512 --no-mmap
     #
     # ========================================================================
+
+  agents:
+    build:
+      context: .
+      dockerfile: .docker/TypeScript.Dockerfile
+      target: ai-dev
+
+    # This section sets the environment variables inside the Docker container.
+    environment:
+      - TZ=America/Chicago # see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+      # Application environment
+      - APP_ENV=development
+      - NODE_ENV=development
+
+      # Server configuration
+      - PORT=8001
+      - BASE_URL=http://localhost:8001
+      - AGENT_CONFIG_PATH=./agents
+
+      # Google AI API Key - passed from host environment or .env file
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}
+
+    ports:
+      - "8001:8001"
+
+    volumes:
+      - ./:/project
+
+    working_dir: /project/agents
+
+    # Start the agents framework with hot-reload
+    command: bash -c 'npm install && npm run dev'
+
+    # Allow access to agent service and other services
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  ##########################################################################
+  # AI Development Service
+  # Container for LLM agent to develop and test clippy-chat
+  # Accessible via: docker exec -it wordpress-ai-dev-1 bash
+  ##########################################################################
+  ai-dev:
+
+    # This section tells Docker to build a new container using the
+    # setup specified in the given dockerfile.
+    build:
+      context: .
+      dockerfile: .docker/TypeScript.Dockerfile
+      target: ai-dev
+
+    # This section sets the environment variables inside the Docker container.
+    environment:
+      - TZ=America/Chicago # see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+      # Application environment
+      - APP_ENV=development
+
+      # Agent API access (internal)
+      - AGENT_API_URL=http://agent:8088
+
+      # Qwen
+      - OPENAI_API_KEY=your_api_key_here
+      - OPENAI_BASE_URL=http://host.docker.internal:12434/engines/llama.cpp/v1
+      - OPENAI_MODEL=ai/qwen3-coder:latest
+
+      # Google AI API Key - passed from host environment or .env file
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY}
+
+    # Exposed ports for clippy-chat development and testing
+    # {host port}:{container port}
+    #    ports:
+    #      - "3000:3000"
+
+    # `volumes` tells Docker to map folders and files from the host to
+    # inside the Docker container.
+    # NOTE: The host folder/file MUST be inside the project directory.
+    # {host folder}:{container folder}
+    volumes:
+      - ./:/project
+      # Special CLAUDE.md file so we know we are inside docker
+      - ./docker.CLAUDE.md:/home/user/.claude/CLAUDE.md
+      # Mount Docker in Docker
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    working_dir: /project/
+
+    # Sleep infinity allows agent to work interactively inside container
+    command: bash -c 'sleep infinity'
+
+    # Allow access to agent service and other services
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # The `secrets` allows folders and files specified in the `secrets` at the top of this
+    # file to be mapped inside the container.  To use git and composer in the container,
+    # you will need to map your ssh key.
+    secrets:
+      #      - source: gemini-auth
+      #        target: /home/user/.gemini.system
+      #
+      - source: claude-auth
+        target: /home/user/.claude.system/.credentials.json
+        uid: "1000"
+        gid: "1000"
+        mode: 0600
+      - source: claude-cfg
+        target: /home/user/.claude.json.system
+        uid: "1000"
+        gid: "1000"
+        mode: 0600
+  #
+  #      - source: ssh
+  #        target: /home/user/.ssh
+  #        uid: "1000"
+  #        gid: "1000"
+  #        mode: 0700
+
+  #      - source: aws
+  #        target: /home/user/.aws
+  #        uid: "1000"
+  #        gid: "1000"
+  #        mode: 0700

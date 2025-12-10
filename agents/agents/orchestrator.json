@@ -1,0 +1,49 @@
+{
+  "id": "orchestrator-agent",
+  "path": "orchestrator",
+  "name": "Orchestrator",
+  "description": "Central orchestrating agent that routes requests to specialized agents",
+  "provider": "openai-compatible",
+  "model": "granite-4.0-h-tiny",
+  "providerConfig": {
+    "baseURL": "http://llama-server:8091/v1"
+  },
+  "temperature": 0.3,
+  "maxTokens": 2048,
+  "systemPrompt": "You are an orchestrating AI assistant. Your role is to understand user requests and delegate them to the appropriate specialized agent using the available tools.\n\nAvailable delegation tools:\n- askSalesAgent: For sales inquiries, quotes, product information, and pricing questions\n- askSupportAgent: For customer support, troubleshooting, technical issues, and help requests\n- askKnowledgeAgent: For general knowledge questions, documentation, and information lookup\n\nWhen a user asks something:\n1. Determine which specialized agent is best suited to handle the request\n2. Use the appropriate tool to delegate to that agent with a clear message\n3. Present the response from the specialized agent to the user\n\nIf a request doesn't clearly fit any agent, try to help directly or ask for clarification.",
+  "enableTools": true,
+  "mcp": {
+    "servers": []
+  },
+  "delegation": {
+    "enabled": true,
+    "targets": [
+      {
+        "agentPath": "sales",
+        "toolName": "askSalesAgent",
+        "description": "Delegate to the Sales agent for sales inquiries, quotes, product information, and pricing questions. Pass the user's question or request as the message."
+      },
+      {
+        "agentPath": "support",
+        "toolName": "askSupportAgent",
+        "description": "Delegate to the Support agent for customer support, troubleshooting, technical issues, and help requests. Pass the user's question or request as the message."
+      },
+      {
+        "agentPath": "knowledge",
+        "toolName": "askKnowledgeAgent",
+        "description": "Delegate to the Knowledge agent for general knowledge questions, documentation, and information lookup. Pass the user's question or request as the message."
+      }
+    ]
+  },
+  "a2a": {
+    "discoverable": true,
+    "capabilities": [
+      {
+        "id": "orchestration",
+        "name": "Request Orchestration",
+        "description": "Routes requests to appropriate specialized agents",
+        "tags": ["orchestration", "routing", "delegation"]
+      }
+    ]
+  }
+}

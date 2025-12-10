@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clippy Chat Widget Demo</title>
+
+    <!-- REQUIRED: ClippyJS CSS -->
+    <link rel="stylesheet" href="../vendor/clippyjs/assets/clippy.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .demo-card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .demo-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .demo-card ul {
+            color: #666;
+            line-height: 1.8;
+            margin-left: 20px;
+        }
+
+        .demo-card li {
+            margin-bottom: 8px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.online {
+            background: #28a745;
+            box-shadow: 0 0 8px #28a745;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .feature-card .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .cta {
+            text-align: center;
+            color: white;
+            font-size: 24px;
+            margin-top: 40px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📎 Clippy Chat Widget</h1>
+            <p>Your friendly AI assistant is here to help!</p>
+        </div>
+
+        <div class="demo-card">
+            <h2>Welcome to the Clippy Chat Demo!</h2>
+            <p>
+                This page demonstrates the Clippy Chat widget - an embeddable AI chat interface
+                featuring the classic Microsoft Office assistant, Clippy.
+            </p>
+            <p>
+                <strong>Look at the bottom-right corner!</strong> Click on Clippy to start chatting.
+                He's powered by a real AI agent backend and can help answer your questions.
+            </p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="icon">🎯</div>
+                    <h3>Interactive</h3>
+                    <p>Click Clippy to open the chat bubble and start a conversation</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🎭</div>
+                    <h3>Animated</h3>
+                    <p>Context-aware animations respond to conversation state</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🤖</div>
+                    <h3>AI-Powered</h3>
+                    <p>Connected to a real AI agent with tool support</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">⚙️</div>
+                    <h3>Configurable</h3>
+                    <p>Extensive customization options for your needs</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-card">
+            <h2>How to Use</h2>
+            <ul>
+                <li><strong>Click Clippy</strong> in the bottom-right corner to open the chat bubble</li>
+                <li><strong>Type your message</strong> in the input field</li>
+                <li><strong>Press Enter or click Send</strong> to send your message</li>
+                <li><strong>Watch Clippy animate</strong> as he thinks and responds</li>
+                <li><strong>Close the bubble</strong> using the X button to start a fresh session later</li>
+            </ul>
+
+            <div class="info-box">
+                <h3><span class="status-indicator online"></span>Agent Status</h3>
+                <p>Backend API: <code id="api-url">Loading...</code></p>
+                <p>Status: <code id="api-status">Checking...</code></p>
+            </div>
+        </div>
+
+        <div class="demo-card">
+            <h2>Features</h2>
+            <ul>
+                <li>💬 <strong>Multi-turn conversations</strong> - Maintains context throughout the chat</li>
+                <li>🎨 <strong>Context-aware animations</strong> - Thinking, excited, confused, and more</li>
+                <li>🔄 <strong>Fresh sessions</strong> - Each chat bubble opening starts a new conversation</li>
+                <li>📱 <strong>Responsive design</strong> - Works on desktop and mobile</li>
+                <li>🚀 <strong>Easy integration</strong> - Just a few lines of code to embed</li>
+                <li>🛠️ <strong>Tool support</strong> - Can use backend MCP tools when enabled</li>
+            </ul>
+        </div>
+
+        <div class="cta">
+            👇 Try clicking Clippy now! 👇
+        </div>
+
+        <div class="footer">
+            <p>Powered by ClippyJS, AI Agent API, and a lot of nostalgia</p>
+        </div>
+    </div>
+
+    <!-- jQuery (required by ClippyJS) -->
+    <script src="../vendor/jquery/dist/jquery.min.js"></script>
+
+    <!-- ClippyJS Library -->
+    <script src="../vendor/clippyjs/clippy.js"></script>
+
+    <!-- Clippy Chat Widget -->
+    <script src="../dist/clippy-chat.js"></script>
+
+    <script>
+        // Initialize the widget
+        ClippyChat.init({
+            apiUrl: 'http://localhost:8088',
+            clippyPosition: 'bottom-right',
+            autoGreeting: 'Hi! I\'m Clippy, your AI assistant. How can I help you today?',
+            playIdleAnimations: true
+        }).then(() => {
+            console.log('✅ ClippyChat initialized!');
+            updateStatus();
+        }).catch((error) => {
+            console.error('❌ Failed to initialize ClippyChat:', error);
+            document.getElementById('api-status').textContent = 'Error: ' + error.message;
+        });
+
+        // Update API status
+        async function updateStatus() {
+            try {
+                const response = await fetch('http://localhost:8088/health');
+                const data = await response.json();
+
+                document.getElementById('api-url').textContent = 'http://localhost:8088';
+                document.getElementById('api-status').textContent = '✅ Online (v' + data.version + ')';
+            } catch (error) {
+                document.getElementById('api-status').textContent = '❌ Offline';
+            }
+        }
+    </script>
+</body>
+</html>

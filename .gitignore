@@ -5,3 +5,5 @@ wordpress-db/
 backup/
 logs/
 models/
+agents/dist/
+agents/node_modules/

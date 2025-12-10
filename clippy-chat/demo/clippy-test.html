@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clippy Movement & Animation Test</title>
+
+    <!-- REQUIRED: ClippyJS CSS -->
+    <link rel="stylesheet" href="vendor/clippyjs/assets/clippy.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .position-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .position-buttons button:nth-child(1) { grid-column: 1; grid-row: 1; }
+        .position-buttons button:nth-child(2) { grid-column: 2; grid-row: 1; }
+        .position-buttons button:nth-child(3) { grid-column: 3; grid-row: 1; }
+        .position-buttons button:nth-child(4) { grid-column: 1; grid-row: 2; }
+        .position-buttons button:nth-child(5) { grid-column: 2; grid-row: 2; }
+        .position-buttons button:nth-child(6) { grid-column: 3; grid-row: 2; }
+        .position-buttons button:nth-child(7) { grid-column: 1; grid-row: 3; }
+        .position-buttons button:nth-child(8) { grid-column: 2; grid-row: 3; }
+        .position-buttons button:nth-child(9) { grid-column: 3; grid-row: 3; }
+
+        .custom-position {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .custom-position input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100px;
+        }
+
+        .custom-position label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        #animationList {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .status {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .coords-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Clippy Movement & Animation Test</h1>
+
+        <div class="control-panel">
+            <!-- Status -->
+            <div id="status" class="status loading">Loading Clippy...</div>
+
+            <!-- Position Controls -->
+            <div class="section">
+                <div class="section-title">📍 Position Controls</div>
+                <div class="position-buttons">
+                    <button onclick="moveToPosition('top-left')">↖️ Top Left</button>
+                    <button onclick="moveToPosition('top-center')">⬆️ Top Center</button>
+                    <button onclick="moveToPosition('top-right')">↗️ Top Right</button>
+                    <button onclick="moveToPosition('middle-left')">⬅️ Middle Left</button>
+                    <button onclick="moveToPosition('center')">🎯 Center</button>
+                    <button onclick="moveToPosition('middle-right')">➡️ Middle Right</button>
+                    <button onclick="moveToPosition('bottom-left')">↙️ Bottom Left</button>
+                    <button onclick="moveToPosition('bottom-center')">⬇️ Bottom Center</button>
+                    <button onclick="moveToPosition('bottom-right')">↘️ Bottom Right</button>
+                </div>
+
+                <div class="custom-position">
+                    <label>X:</label>
+                    <input type="number" id="customX" value="100" min="0">
+                    <label>Y:</label>
+                    <input type="number" id="customY" value="100" min="0">
+                    <label>Duration (ms):</label>
+                    <input type="number" id="duration" value="500" min="0" max="5000">
+                    <button onclick="moveToCustom()">🎯 Move to Custom</button>
+                </div>
+            </div>
+
+            <!-- Animation Controls -->
+            <div class="section">
+                <div class="section-title">🎭 Animations</div>
+                <div class="button-grid">
+                    <button onclick="playAnimation('Greeting')">👋 Greeting</button>
+                    <button onclick="playAnimation('Thinking')">🤔 Thinking</button>
+                    <button onclick="playAnimation('Explaining')">💬 Explaining</button>
+                    <button onclick="playAnimation('Congratulate')">🎉 Congratulate</button>
+                    <button onclick="playAnimation('Searching')">🔍 Searching</button>
+                    <button onclick="playAnimation('GetAttention')">👀 Get Attention</button>
+                    <button onclick="playAnimation('Wave')">👋 Wave</button>
+                    <button onclick="playAnimation('LookDown')">👇 Look Down</button>
+                    <button onclick="playAnimation('LookLeft')">👈 Look Left</button>
+                    <button onclick="playAnimation('LookRight')">👉 Look Right</button>
+                    <button onclick="playAnimation('LookUp')">👆 Look Up</button>
+                    <button onclick="playRandomAnimation()">🎲 Random Animation</button>
+                </div>
+                <div class="button-grid">
+                    <button onclick="stopClippy()">⏹️ Stop</button>
+                    <button onclick="pauseClippy()">⏸️ Pause</button>
+                    <button onclick="resumeClippy()">▶️ Resume</button>
+                    <button onclick="showAllAnimations()">📋 List All Animations</button>
+                </div>
+            </div>
+
+            <!-- Speech Test -->
+            <div class="section">
+                <div class="section-title">💬 Speech Bubble</div>
+                <div class="custom-position">
+                    <input type="text" id="speechText" placeholder="Enter text for Clippy to say..." style="flex: 1; width: auto;">
+                    <button onclick="speakText()">💬 Speak</button>
+                </div>
+                <div class="button-grid" style="margin-top: 10px;">
+                    <button onclick="speakText('Hello! I am Clippy!')">Say Hello</button>
+                    <button onclick="speakText('Looking good!')">Compliment</button>
+                    <button onclick="speakText('Do you need help?')">Offer Help</button>
+                    <button onclick="speakText('Let me think about that...')">Think</button>
+                </div>
+            </div>
+
+            <!-- Combo Actions -->
+            <div class="section">
+                <div class="section-title">🎬 Combo Actions</div>
+                <div class="button-grid">
+                    <button onclick="comboGreeting()">👋 Greeting + Move</button>
+                    <button onclick="comboSearch()">🔍 Search + Think</button>
+                    <button onclick="comboTour()">🗺️ Corner Tour</button>
+                    <button onclick="comboCelebrate()">🎉 Celebrate + Wave</button>
+                </div>
+            </div>
+
+            <!-- Info Display -->
+            <div class="section">
+                <div class="section-title">📊 Status Info</div>
+                <div class="info-box">
+                    <div class="info-item">
+                        <span class="info-label">Current Position:</span>
+                        <span class="info-value" id="currentPosition">Not loaded</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Window Size:</span>
+                        <span class="info-value" id="windowSize">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Queue Length:</span>
+                        <span class="info-value" id="queueLength">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Clippy Size:</span>
+                        <span class="info-value">~100x100px</span>
+                    </div>
+                </div>
+                <div id="animationList" style="display: none; margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery (required by ClippyJS) -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+
+    <!-- ClippyJS Library (bundled) -->
+    <script src="vendor/clippyjs/clippy.js"></script>
+
+    <script>
+        let clippyAgent = null;
+        const CLIPPY_SIZE = 100;
+        const OFFSET = 20;
+
+        // Initialize Clippy
+        clippy.load('Clippy', function(agent) {
+            clippyAgent = agent;
+
+            // Position at bottom-right first (BEFORE showing)
+            const x = window.innerWidth - CLIPPY_SIZE - OFFSET;
+            const y = window.innerHeight - CLIPPY_SIZE - OFFSET;
+            agent.moveTo(x, y, 0);
+
+            // Now show
+            agent.show();
+
+            // Play greeting
+            setTimeout(() => {
+                agent.play('Greeting');
+            }, 500);
+
+            // Update status
+            updateStatus('success', '✅ Clippy loaded successfully!');
+            updateInfo();
+
+            // Start info update interval
+            setInterval(updateInfo, 500);
+
+        }, function(error) {
+            console.error('Failed to load Clippy:', error);
+            updateStatus('error', '❌ Failed to load Clippy: ' + error);
+        }, 'vendor/clippyjs/assets/agents/');
+
+        // Position calculation
+        function calculatePosition(position) {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const size = CLIPPY_SIZE;
+            const offset = OFFSET;
+
+            switch(position) {
+                case 'top-left':
+                    return { x: offset, y: offset };
+                case 'top-center':
+                    return { x: (w - size) / 2, y: offset };
+                case 'top-right':
+                    return { x: w - size - offset, y: offset };
+                case 'middle-left':
+                    return { x: offset, y: (h - size) / 2 };
+                case 'center':
+                    return { x: (w - size) / 2, y: (h - size) / 2 };
+                case 'middle-right':
+                    return { x: w - size - offset, y: (h - size) / 2 };
+                case 'bottom-left':
+                    return { x: offset, y: h - size - offset };
+                case 'bottom-center':
+                    return { x: (w - size) / 2, y: h - size - offset };
+                case 'bottom-right':
+                    return { x: w - size - offset, y: h - size - offset };
+                default:
+                    return { x: offset, y: offset };
+            }
+        }
+
+        // Move to predefined position
+        function moveToPosition(position) {
+            if (!clippyAgent) return alert('Clippy not loaded yet!');
+
+            const { x, y } = calculatePosition(position);
+            const duration = parseInt(document.getElementById('duration').value) || 500;
+
+            // Stop current animations (IMPORTANT!)
+            clippyAgent.stop();
+
+            // Move
+            clippyAgent.moveTo(x, y, duration);
+
+            console.log(`Moving to ${position}: (${x}, ${y})`);
+        }
+
+        // Move to custom position
+        function moveToCustom() {
+            if (!clippyAgent) return alert('Clippy not loaded yet!');
+
+            const x = parseInt(document.getElementById('customX').value);
+            const y = parseInt(document.getElementById('customY').value);
+            const duration = parseInt(document.getElementById('duration').value);
+
+            clippyAgent.stop();
+            clippyAgent.moveTo(x, y, duration);
+
+            console.log(`Moving to custom: (${x}, ${y})`);
+        }
+
+        // Play animation
+        function playAnimation(animationName) {
+            if (!clippyAgent) return alert('Clippy not loaded yet!');
+
+            clippyAgent.play(animationName);
+            console.log(`Playing animation: ${animationName}`);
+        }
+
+        // Play random animation
+        function playRandomAnimation() {
+            if (!clippyAgent) return alert('Clippy not loaded yet!');
+
+            clippyAgent.animate();
+            console.log('Playing random animation');
+        }
+
+        // Speech
+        function speakText(text) {
+            if (!clippyAgent) return alert('Clippy not loaded yet!');
+
+            if (!text) {
+                text = document.getElementById('speechText').value;
+            }
+
+            if (!text) {
+                alert('Please enter some text!');
+                return;
+            }
+
+            clippyAgent.speak(text);
+            console.log(`Speaking: ${text}`);
+        }
+
+        // Control functions
+        function stopClippy() {
+            if (!clippyAgent) return;
+            clippyAgent.stop();
+            console.log('Stopped all actions');
+        }
+
+        function pauseClippy() {
+            if (!clippyAgent) return;
+            clippyAgent.pause();
+            console.log('Paused');
+        }
+
+        function resumeClippy() {
+            if (!clippyAgent) return;
+            clippyAgent.resume();
+            console.log('Resumed');
+        }
+
+        // Show all available animations
+        function showAllAnimations() {
+            if (!clippyAgent) return alert('Clippy not loaded yet!');
+
+            const animations = clippyAgent.animations();
+            const listDiv = document.getElementById('animationList');
+
+            listDiv.innerHTML = '<h3 style="margin: 0 0 10px 0;">Available Animations (' + animations.length + '):</h3>' +
+                animations.sort().join(', ');
+            listDiv.style.display = 'block';
+
+            console.log('Available animations:', animations);
+        }
+
+        // Combo actions
+        function comboGreeting() {
+            if (!clippyAgent) return;
+
+            clippyAgent.stop();
+            moveToPosition('center');
+            setTimeout(() => {
+                clippyAgent.play('Greeting');
+                clippyAgent.speak('Hello there!');
+            }, 600);
+        }
+
+        function comboSearch() {
+            if (!clippyAgent) return;
+
+            clippyAgent.stop();
+            clippyAgent.play('Searching');
+            setTimeout(() => {
+                clippyAgent.play('Thinking');
+            }, 2000);
+        }
+
+        function comboTour() {
+            if (!clippyAgent) return;
+
+            const corners = ['top-left', 'top-right', 'bottom-right', 'bottom-left', 'center'];
+            let i = 0;
+
+            clippyAgent.stop();
+
+            function nextCorner() {
+                if (i < corners.length) {
+                    moveToPosition(corners[i]);
+                    i++;
+                    setTimeout(nextCorner, 1000);
+                }
+            }
+
+            nextCorner();
+        }
+
+        function comboCelebrate() {
+            if (!clippyAgent) return;
+
+            clippyAgent.stop();
+            moveToPosition('center');
+            setTimeout(() => {
+                clippyAgent.play('Congratulate');
+                clippyAgent.speak('Excellent!');
+                setTimeout(() => {
+                    clippyAgent.play('Wave');
+                }, 2000);
+            }, 600);
+        }
+
+        // Update status display
+        function updateStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status ' + type;
+            statusDiv.textContent = message;
+        }
+
+        // Update info display
+        function updateInfo() {
+            if (!clippyAgent) return;
+
+            // Get Clippy's current position
+            const clippyElem = document.querySelector('.clippy');
+            if (clippyElem) {
+                const computed = window.getComputedStyle(clippyElem);
+                const top = computed.top;
+                const left = computed.left;
+                document.getElementById('currentPosition').innerHTML =
+                    `<span class="coords-display">X: ${left}, Y: ${top}</span>`;
+            }
+
+            // Window size
+            document.getElementById('windowSize').textContent =
+                `${window.innerWidth} x ${window.innerHeight}`;
+
+            // Queue length (try to access internal queue)
+            try {
+                const queueLength = clippyAgent._queue._queue.length;
+                document.getElementById('queueLength').textContent = queueLength;
+            } catch (e) {
+                document.getElementById('queueLength').textContent = 'N/A';
+            }
+        }
+
+        // Handle window resize
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                updateInfo();
+            }, 250);
+        });
+
+        // Log key presses for debugging
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'd' && e.ctrlKey) {
+                e.preventDefault();
+                console.log('=== DEBUG INFO ===');
+                console.log('Agent:', clippyAgent);
+                if (clippyAgent) {
+                    console.log('Animations:', clippyAgent.animations());
+                    console.log('Queue:', clippyAgent._queue);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
