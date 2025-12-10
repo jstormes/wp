@@ -26,7 +26,7 @@ An embeddable JavaScript widget that brings the classic Clippy character to life
   <script src="clippy-chat.js"></script>
   <script>
     ClippyChat.init({
-      apiUrl: 'http://localhost:8088',
+      apiUrl: 'http://localhost:8001',
       clippyPosition: 'bottom-right',
       autoGreeting: 'Hi! Need help finding products?'
     });
@@ -166,7 +166,7 @@ See [TESTING.md](TESTING.md) for comprehensive testing documentation.
 ```javascript
 ClippyChat.init({
   // API Configuration
-  apiUrl: 'http://localhost:8088',
+  apiUrl: 'http://localhost:8001',
   model: 'ai/granite-4.0-h-tiny:7B-Q4_K_M',
   enableTools: true,
 

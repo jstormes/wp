@@ -5,7 +5,8 @@
 
 class APIClient {
   constructor(config = {}) {
-    this.apiUrl = config.apiUrl || 'http://localhost:8088';
+    this.apiUrl = config.apiUrl || 'http://localhost:8001';
+    this.agentPath = config.agentPath || 'front-end';
     this.enableTools = config.enableTools !== false;
     this.timeout = config.timeout || 45000; // 45 seconds
   }
@@ -21,21 +22,22 @@ class APIClient {
       throw new Error('Messages must be a non-empty array');
     }
 
+    // Get the last user message for the agents API format
+    const lastMessage = messages[messages.length - 1];
+    const messageText = lastMessage.content || lastMessage.text || '';
+
+    // Build request body for agents framework API
     const requestBody = {
-      messages: messages,
-      options: {
-        enableTools: options.enableTools !== undefined ? options.enableTools : this.enableTools,
-        temperature: options.temperature || 0.7,
-        maxTokens: options.maxTokens || 2048,
-        conversationId: options.conversationId
-      }
+      message: messageText,
+      conversationId: options.conversationId,
+      metadata: options.metadata || {}
     };
 
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-      const response = await fetch(`${this.apiUrl}/api/chat`, {
+      const response = await fetch(`${this.apiUrl}/agents/${this.agentPath}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -53,7 +55,7 @@ class APIClient {
 
       const data = await response.json();
 
-      // Handle both response formats (string or object with text)
+      // Handle agents framework response format
       return this._extractResponseText(data);
 
     } catch (error) {
@@ -65,12 +67,17 @@ class APIClient {
   }
 
   /**
-   * Extract text from API response (handles both string and object formats)
+   * Extract text from API response (handles agents framework format)
    * @param {Object} data - Response data from API
    * @returns {string} - Extracted text
    * @private
    */
   _extractResponseText(data) {
+    // Handle agents framework format: { success: true, data: { text: "..." } }
+    if (data.success && data.data && data.data.text) {
+      return data.data.text;
+    }
+
     // Handle direct string response
     if (typeof data.response === 'string') {
       return data.response;
@@ -83,6 +90,11 @@ class APIClient {
       }
       // Fallback: stringify the response object
       return JSON.stringify(data.response);
+    }
+
+    // Handle direct text property
+    if (data.text) {
+      return data.text;
     }
 
     // Fallback: no valid response found

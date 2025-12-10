@@ -11,7 +11,7 @@ const CLIPPY_CONFIG = {
     // ============================================
 
     // Your agent API URL (Required)
-    apiUrl: 'http://localhost:8088',
+    apiUrl: 'http://localhost:8001',
 
     // Enable AI tools/functions
     enableTools: true,

@@ -288,8 +288,8 @@ services:
 
     # Exposed ports for clippy-chat development and testing
     # {host port}:{container port}
-    #    ports:
-    #      - "3000:3000"
+    ports:
+      - "3000:3000"
 
     # `volumes` tells Docker to map folders and files from the host to
     # inside the Docker container.

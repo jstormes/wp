@@ -4,7 +4,7 @@
   "name": "Front-End Assistant",
   "description": "AI assistant for website visitors, powered by local Granite model",
   "provider": "openai-compatible",
-  "model": "granite-4.0-h-tiny",
+  "model": "granite-4.0-h-tiny-Q4_K_M.gguf",
   "providerConfig": {
     "baseURL": "http://llama-server:8091/v1"
   },

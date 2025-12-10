@@ -44,7 +44,8 @@ class ClippyChatWidget {
     // Merge default config
     this.config = {
       // API Configuration
-      apiUrl: config.apiUrl || 'http://localhost:8088',
+      apiUrl: config.apiUrl || 'http://localhost:8001',
+      agentPath: config.agentPath || 'front-end',
       enableTools: config.enableTools !== false,
 
       // Clippy Configuration
@@ -74,6 +75,7 @@ class ClippyChatWidget {
       // Initialize API client
       this.apiClient = new APIClient({
         apiUrl: this.config.apiUrl,
+        agentPath: this.config.agentPath,
         enableTools: this.config.enableTools
       });
 

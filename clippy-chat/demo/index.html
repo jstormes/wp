@@ -253,7 +253,8 @@
     <script>
         // Initialize the widget
         ClippyChat.init({
-            apiUrl: 'http://localhost:8088',
+            apiUrl: 'http://localhost:8001',
+            clippyAgentPath: '../vendor/clippyjs/assets/agents/',
             clippyPosition: 'bottom-right',
             autoGreeting: 'Hi! I\'m Clippy, your AI assistant. How can I help you today?',
             playIdleAnimations: true
@@ -268,10 +269,10 @@
         // Update API status
         async function updateStatus() {
             try {
-                const response = await fetch('http://localhost:8088/health');
+                const response = await fetch('http://localhost:8001/health');
                 const data = await response.json();
 
-                document.getElementById('api-url').textContent = 'http://localhost:8088';
+                document.getElementById('api-url').textContent = 'http://localhost:8001';
                 document.getElementById('api-status').textContent = '✅ Online (v' + data.version + ')';
             } catch (error) {
                 document.getElementById('api-status').textContent = '❌ Offline';
