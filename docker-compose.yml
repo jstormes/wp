@@ -103,3 +103,95 @@ services:
       retries: 3
       start_period: 60s
 
+  ##########################################################################
+  # LLM Inference Server (llama.cpp)
+  # Provides OpenAI-compatible API for local LLM inference
+  # API endpoint: http://localhost:8091/v1/chat/completions
+  ##########################################################################
+  llama-server:
+    build:
+      context: .
+      dockerfile: .docker/llamacpp.Dockerfile
+
+    ports:
+      - "8191:8091"
+
+    volumes:
+      - ./models:/models
+
+    # For debugging, uncomment to keep container running:
+    # command: bash -c 'sleep infinity'
+
+    command: >
+      /opt/llama.cpp/build/bin/llama-server
+      -m /models/granite-4.0-h-tiny-Q4_K_M.gguf
+      -mu https://huggingface.co/ibm-granite/granite-4.0-h-tiny-GGUF/resolve/main/granite-4.0-h-tiny-Q4_K_M.gguf?download=true
+      -c 4096
+      --host 0.0.0.0
+      --port 8091
+      --mlock
+
+    # ========================================================================
+    # llama-server Command Line Options Reference
+    # ========================================================================
+    #
+    # MODEL OPTIONS:
+    #   -m, --model FILE        Path to the model file (required)
+    #   -mu, --model-url URL    Download model from URL if not present locally
+    #   -a, --alias NAME        Set model alias for API responses
+    #
+    # CONTEXT OPTIONS:
+    #   -c, --ctx-size N        Context size (default: 4096, 0 = model default)
+    #   -n, --predict N         Max tokens to predict (default: -1, -1 = infinite)
+    #   --keep N                Tokens to keep from initial prompt (default: 0)
+    #
+    # GPU OPTIONS:
+    #   -ngl, --gpu-layers N    Layers to offload to GPU (default: 0, 999 = all)
+    #   -sm, --split-mode       GPU split mode: none, layer, row (default: layer)
+    #   -mg, --main-gpu N       Main GPU for scratch/small tensors (default: 0)
+    #   -ts, --tensor-split     Comma-separated list of GPU tensor split ratios
+    #
+    # PERFORMANCE OPTIONS:
+    #   -t, --threads N         CPU threads for generation (default: auto)
+    #   -tb, --threads-batch N  CPU threads for batch processing (default: auto)
+    #   -b, --batch-size N      Logical batch size (default: 2048)
+    #   -ub, --ubatch-size N    Physical batch size (default: 512)
+    #   --mlock               Force model to stay in RAM
+    #   --no-mmap             Don't memory-map the model
+    #
+    # SERVER OPTIONS:
+    #   --host HOST             Listen address (default: 127.0.0.1, use 0.0.0.0 for all)
+    #   --port PORT             Listen port (default: 8080)
+    #   --timeout N             Server timeout in seconds (default: 600)
+    #   -np, --parallel N       Max parallel sequences (default: 1)
+    #   --cont-batching         Enable continuous batching (default: disabled)
+    #
+    # GENERATION OPTIONS:
+    #   --temp N                Temperature (default: 0.8)
+    #   --top-k N               Top-K sampling (default: 40)
+    #   --top-p N               Top-P sampling (default: 0.9)
+    #   --repeat-penalty N      Repeat penalty (default: 1.1)
+    #   --seed N                Random seed (default: -1 = random)
+    #
+    # API OPTIONS:
+    #   --api-key KEY           API key for authentication (optional)
+    #   --chat-template NAME    Chat template: llama2, chatml, etc.
+    #   --embeddings            Enable embedding endpoint
+    #
+    # LOGGING OPTIONS:
+    #   -v, --verbose           Enable verbose output
+    #   --log-disable           Disable logging
+    #   --log-file FILE         Log to file instead of stderr
+    #
+    # EXAMPLE CONFIGURATIONS:
+    #
+    # High performance (GPU with 24GB VRAM):
+    #   -m /models/model.gguf -c 8192 -ngl 999 --cont-batching -np 4
+    #
+    # CPU only with more threads:
+    #   -m /models/model.gguf -c 4096 -t 8 --mlock
+    #
+    # Low memory usage:
+    #   -m /models/model.gguf -c 2048 -b 512 --no-mmap
+    #
+    # ========================================================================
